@@ -231,7 +231,7 @@ const ImportExcelDatatables = () => {
             <Table>
               <thead>
                 <tr>
-                  <th>emdID</th>
+                  <th>empID</th>
                   <th>Name</th>
                   <th>LastName</th>
                   <th>Position</th>
