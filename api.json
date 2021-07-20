@@ -1,13 +1,13 @@
 [
     {
-        "emdid" : "002",
+        "empid" : "002",
         "name" : "albert",
         "lastname" : "aeker",
         "position" : "Junior Javascript Developer",
         "startDates" : "12/08/2015"
     },
     {
-        "emdid" : "001",
+        "empid" : "001",
         "name" : "tony",
         "lastname" : "burney",
         "position" : "Senior Javascript Developer",

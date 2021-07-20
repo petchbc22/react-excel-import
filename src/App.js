@@ -218,7 +218,7 @@ const ImportExcelDatatables = () => {
     setInitialData([])
     document.getElementById("inputFiles").value = ""
   }
-
+console.log(masterData)
   return (
     <>
       {/* components */}
@@ -243,7 +243,7 @@ const ImportExcelDatatables = () => {
                   masterData.map((data, key) => {
                     return (
                       <tr key={key}>
-                        <th scope="row">{data.emdid}</th>
+                        <th scope="row">{data.empid}</th>
                         <td>{data.name}</td>
                         <td>{data.lastname}</td>
                         <td>{data.position}</td>
