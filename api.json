@@ -1,0 +1,16 @@
+[
+    {
+        "emdid" : "002",
+        "name" : "albert",
+        "lastname" : "aeker",
+        "position" : "Junior Javascript Developer",
+        "startDates" : "12/08/2015"
+    },
+    {
+        "emdid" : "001",
+        "name" : "tony",
+        "lastname" : "burney",
+        "position" : "Senior Javascript Developer",
+        "startDates" : "01/01/2015"
+    }
+]
