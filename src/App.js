@@ -1,11 +1,19 @@
 import React, { useState, useEffect } from "react";
-// import {Container,Label, Card, CardHeader, CardTitle, CardBody, Form, FormGroup, Row, Col, Progress } from "reactstrap"
-import { Container, Row, Col, Label, Button, Table } from "reactstrap";
+import {
+  Container,
+  Row,
+  Col,
+  Label,
+  Button,
+  Table,
+  FormGroup,
+} from "reactstrap";
 import { readFile } from "@ramonak/react-excel";
 import "./custom.css";
 import DataTableComponent from "./components/datatableCustom.jsx";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import ReactLoading from "react-loading";
 
 toast.configure();
 
@@ -20,10 +28,34 @@ const ImportExcelDatatables = () => {
   const [textinputFile, setTextinputFile] = useState("");
   const [initialData, setInitialData] = useState([]);
   const [rows, setRows] = useState([]);
-  const [rows2, setRows2] = useState([]);
+  const [initialValidData, setInitialValidData] = useState([]);
+
   const [masterData, setMasterData] = useState([]);
+  const [loadingSpin, setLoadingSpin] = useState(false);
   // -------------------- columns for datatables -------------------------------------
   const columns = [
+    {
+      name: "no",
+      label: (
+        <div>
+          <Label className="mb-1">no</Label>
+        </div>
+      ),
+      theadAlign: "center",
+      tbody: (row) => (
+        <div
+          className="text-center"
+          style={
+            row.valid === false
+              ? { width: "100%", background: "rgba(220, 53, 69, 0.3)" }
+              : { width: "100%" }
+          }
+        >
+          <Label>{row.no}</Label>
+        </div>
+      ),
+      width: "10%",
+    },
     {
       name: "empid",
       label: (
@@ -116,7 +148,7 @@ const ImportExcelDatatables = () => {
           <Label>{row.position}</Label>
         </div>
       ),
-      width: "30%",
+      width: "20%",
     },
     {
       name: "startDates",
@@ -144,19 +176,28 @@ const ImportExcelDatatables = () => {
     },
   ];
   //----------------------------useEffect ----------------------------------------------
+  // Fetch Data API
   useEffect(() => {
+    setLoadingSpin(true);
     fetch(
       "https://raw.githubusercontent.com/petchbc22/react-excel-import/main/api.json"
     )
       .then((Response) => Response.json())
-      .then((data) => setMasterData(data))
-      .catch((err) => console.log(err));
+      .then((data) => {
+        setMasterData(data);
+        setLoadingSpin(false);
+      })
+      .catch((err) =>   
+      toast.error("error loading api.", {
+        position: toast.POSITION.BOTTOM_RIGHT,
+        autoClose: 3000,
+        hideProgressBar:true
+      }),
+      setLoadingSpin(false)
+      );
   }, []);
-
+  // Read XLSX file
   useEffect(() => {
-    // if (initialData.SheetNames) {
-    //   console.log()
-    // }
     if (initialData.SheetNames) {
       var setData = function setData() {
         var result = initialData.SheetNames.map(function (name) {
@@ -177,51 +218,117 @@ const ImportExcelDatatables = () => {
           );
         if (header === "empidnamelastnamepositionstartDates") {
           // check header of xlsx is true
-          console.log("result[0].slice(2)", result[0].slice(2));
-          setRows(result[0].slice(2));
+          let datawithNo = result[0].slice(1).map((data,index)=>{
+            return{
+              no : index+1,
+              ...data
+            }
+          })
+          setRows(datawithNo);
+          setLoadingSpin(false);
         } else {
-          console.log("ข้อมูลผิด");
           setTextinputFile("");
           toast.error("header is not corresponding.", {
             position: toast.POSITION.BOTTOM_RIGHT,
             autoClose: 3000,
+            hideProgressBar:true
           });
-          document.getElementById("inputFilesStudent").value = "";
+          document.getElementById("inputFiles").value = "";
         }
       };
       initialData && setData();
     }
   }, [initialData]);
-
   //---------------------------------- FNC ALL ---------------------------------------
+  // FNC Compare to find Duplicate ID
+  function comparer(otherArray) {
+    return function (current) {
+      return (
+        otherArray.filter(function (other) {
+          return other.empid === current.empid;
+        }).length !== 0
+      );
+    };
+  }
+  // FNC Upload XLSX
   const handleUpload = (e) => {
-    // setStatusProcess(true)
+
+    setInitialData([]);
+    setInitialValidData([]);
     setRows([]);
-    // setRows2([])
     const file = e.target.files[0];
     if (file) {
-      console.log("files---", file);
       setTextinputFile(file.name);
       readFile(file)
-        .then((readedData) => setInitialData(readedData))
+        .then((readedData) => setInitialData(readedData),setInitialValidData([]))
         .catch((error) => {
           toast.error("file import is not xlsx format.", {
             position: toast.POSITION.BOTTOM_RIGHT,
             autoClose: 3000,
+            hideProgressBar:true
+
           });
         });
     }
   };
-  const fncClear = () =>{
-    setRows([])
-    setTextinputFile("")
-    setInitialData([])
-    document.getElementById("inputFiles").value = ""
-  }
-console.log(masterData)
+  // ONCLICK Validation Button
+  const validation = () => {
+    setLoadingSpin(true);
+    let inputAddID = rows.map((obj, index) => ({ id: index, ...obj }));
+    let dataxlsx = rows.map((data, index) => {
+      return {
+        id: index,
+        valid: false,
+        empid: String(data.empid),
+        Errorempid: data.empid,
+      };
+    });
+    let empidError = dataxlsx.filter(comparer(masterData));
+    const responseTextValid = inputAddID.map((t1) => ({
+      id: t1.id,
+      ...empidError.find((data) => data.empid === t1.empid),
+    }));
+    const dataRowsValid = inputAddID.map((t1) => ({
+      ...t1, // get all object in inputAddID
+      ...empidError.find((data) => data.empid === t1.empid),
+    }));
+    let onlyErrorRow = responseTextValid.filter((x) => x.valid === false);
+    if (onlyErrorRow.length) {
+      setLoadingSpin(false);
+      setRows(dataRowsValid);
+      setInitialValidData(onlyErrorRow);
+    }
+    else{
+      setLoadingSpin(false);
+      toast.success("send data to insert :)", {
+        position: toast.POSITION.BOTTOM_RIGHT,
+        autoClose: 3000,
+        hideProgressBar:true
+      });
+    }
+  };
+  // ONCLICK Clear Button
+  const fncClear = () => {
+    setRows([]);
+    setTextinputFile("");
+    setInitialData([]);
+    setInitialValidData([]);
+    document.getElementById("inputFiles").value = "";
+  };
   return (
     <>
-      {/* components */}
+      {loadingSpin === true ? (
+        <div className="main-center-of-page">
+          <ReactLoading
+            type={"spin"}
+            color={"#14b960"}
+            height={30}
+            width={30}
+            className={"m-auto element-center-of-page"}
+          />
+        </div>
+      ) : null}
+
       <Container>
         <Row className="py-1 justify-content-md-center pt-3">
           <Col md="12">
@@ -239,7 +346,7 @@ console.log(masterData)
                 </tr>
               </thead>
               <tbody>
-                {masterData ? (
+                {masterData.length ? (
                   masterData.map((data, key) => {
                     return (
                       <tr key={key}>
@@ -253,11 +360,8 @@ console.log(masterData)
                   })
                 ) : (
                   <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
+                    <td  colSpan="5" className="text-center">no data.</td>
+                   
                   </tr>
                 )}
               </tbody>
@@ -279,7 +383,7 @@ console.log(masterData)
                 ></input>
                 <label
                   className=" custom-file-label m-0"
-                  htmlFor="inputFilesStudent"
+                  htmlFor="inputFiles"
                 >
                   {textinputFile ? textinputFile : "select .XLSX "}
                 </label>
@@ -287,12 +391,29 @@ console.log(masterData)
             </div>
           </Col>
         </Row>
+
         <Row>
           {rows.length ? (
             <>
               <div className="col-12 text-center pt-5">
                 <Label>Your Data in XLSX</Label>
               </div>
+              {initialValidData.length ? (
+                <Col md="12">
+                  { initialValidData.map((data, index) => {
+                    return data.valid === false ? (
+                      <FormGroup key={index}>
+                        <Label style={{ color: "rgba(220, 53, 69)" }}>
+                          Row {parseInt(data.id) + 1} :
+                          {data.Errorempid
+                            ? `empid ${data.Errorempid} duplicate , `
+                            : ""}
+                        </Label>
+                      </FormGroup>
+                    ) : null;
+                  })}
+                </Col>
+              ) : null}
               <div className="col-12">
                 <DataTableComponent
                   columns={columns}
@@ -303,10 +424,14 @@ console.log(masterData)
               </div>
               <div className="col-12 text-center row justify-content-center ">
                 <div className="m-1">
-                  <Button color="success">Validate</Button>
+                  <Button color="success" onClick={validation}>
+                    Validate
+                  </Button>
                 </div>
                 <div className="m-1">
-                  <Button color="danger" onClick={fncClear}>Clear</Button>
+                  <Button color="danger" onClick={fncClear}>
+                    Clear
+                  </Button>
                 </div>
               </div>
             </>

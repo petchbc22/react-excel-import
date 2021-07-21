@@ -1,3 +1,20 @@
 .w-300{
     width : 300px;
 }
+.main-center-of-page{
+    height: 100vh;
+    position: fixed;
+    width: 100vw;
+    background-color: gainsboro;
+    z-index: 100;
+    opacity: 0.7;
+}
+.element-center-of-page{
+    height: 30px;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 30px;
+}

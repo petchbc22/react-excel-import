@@ -66,7 +66,7 @@ const DataTableComponent = (props) => {
 
   useEffect(() => {
     setColumnsMap(
-      columns.map((data, index) => {
+      props.columns.map((data, index) => {
         let newMap = {
           name: data.label,
           selector: data.name,
