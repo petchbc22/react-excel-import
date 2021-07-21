@@ -9,7 +9,7 @@ import {
   FormGroup,
 } from "reactstrap";
 import { readFile } from "@ramonak/react-excel";
-import "./custom.css";
+import "./asset/css/custom.css";
 import DataTableComponent from "./components/datatableCustom.jsx";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -18,7 +18,7 @@ import ReactLoading from "react-loading";
 toast.configure();
 
 const ImportExcelDatatables = () => {
-  //------------- fnc พิเศษจาก lib @ramonak/react-excel สำหรับดึง readfiles มาเอาลง datatables
+  //------------- fnc special lib @ramonak/react-excel for get readfiles to datatables
   function _interopDefault(ex) {
     return ex && typeof ex === "object" && "default" in ex ? ex["default"] : ex;
   }
